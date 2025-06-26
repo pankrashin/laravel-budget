@@ -1,0 +1,50 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    container_name: budget_app
+    working_dir: /var/www/
+    volumes:
+      - ./app:/var/www/
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: budget_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./app:/var/www/
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+  db:
+    image: mysql:8.0
+    container_name: budget_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: laravel_budget
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_USER: laravel_user
+      MYSQL_PASSWORD: user_password
+    volumes:
+      - db-data:/var/lib/mysql
+    ports:
+      - "33066:3306"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db-data:
+    driver: local
